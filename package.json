@@ -1,0 +1,19 @@
+{
+  "name": "zwift-api-wrapper",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest"
+  },
+  "packageManager": "yarn@3.6.3",
+  "devDependencies": {
+    "@tsconfig/node18": "^18.2.2",
+    "@types/node": "^18.2.0",
+    "@types/tough-cookie": "^4.0.4",
+    "dotenv": "^16.3.1",
+    "typescript": "^5.2.2",
+    "vitest": "^0.34.6"
+  },
+  "dependencies": {
+    "tough-cookie": "^4.1.3"
+  }
+}
