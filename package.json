@@ -1,10 +1,11 @@
 {
   "name": "@codingwithspike/zwift-api-wrapper",
   "version": "0.0.1",
-  "private": true,
+  "private": false,
   "scripts": {
     "build": "tsc",
-    "test": "vitest"
+    "test": "vitest",
+    "publish": "yarn build && yarn npm login && yarn npm publish --access public"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

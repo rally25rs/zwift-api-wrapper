@@ -23,7 +23,7 @@ const zwiftApi = new ZwiftAPI(zwiftUsername, zwiftPassword);
 const zwiftAuthCreds = await zwiftApi.authenticate();
 const profile = await zwiftApi.getProfile(athleteId);
 
-const zwiftPowerApi = new ZwiftPowerAPI(process.env.ZWIFT_USER as string, process.env.ZWIFT_PASS as string);
+const zwiftPowerApi = new ZwiftPowerAPI(zwiftUsername, zwiftPassword);
 const zwiftPowerAuthCreds = await zwiftPowerApi.authenticate();
 const eventResults = await zwiftPowerApi.getEventResults(eventId);
 ```
@@ -120,3 +120,10 @@ yarn build
 Update `CHANGELOG.md` and add your changes to the "Unversioned Changes" section.
 
 git commit, push, and open a PR.
+
+### Publish a new version
+
+* Update `CHANGELOG.md`
+* [yarn version](https://yarnpkg.com/cli/version)
+* `git push`
+* `yarn publish`
