@@ -1,9 +1,16 @@
 {
-  "name": "zwift-api-wrapper",
+  "name": "@codingwithspike/zwift-api-wrapper",
+  "version": "0.0.1",
+  "private": true,
   "scripts": {
     "build": "tsc",
     "test": "vitest"
   },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "packageManager": "yarn@3.6.3",
   "devDependencies": {
     "@tsconfig/node18": "^18.2.2",

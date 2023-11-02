@@ -9,6 +9,10 @@ export default class BaseApi {
     this._cookieJar = new CookieJar();
   }
 
+  async setCookies(cookies: string) {
+    this._cookieJar = await CookieJar.deserializeSync(cookies);
+  }
+
   request(
     url: string,
     body: string | undefined = undefined,

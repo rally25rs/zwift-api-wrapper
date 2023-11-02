@@ -1,3 +1,13 @@
+export type ZwiftAuthToken = {
+  access_token: string;
+  refresh_token: string;
+  expires_at: number;
+};
+
+export type ZwiftAPIOptions = {
+  autoRefreshAuth?: boolean;
+};
+
 // Return From
 // GET https://zwiftpower.com/api3.php?do=critical_power_profile&zwift_id=&zwift_event_id=&type=watts
 export type ZwiftPowerCriticalPowerProfile = {
@@ -32,6 +42,96 @@ export type ZwiftPowerEventResultsDataItem = {
   wkg1200: [number, number];
   lagp: string;
   events: string;
+};
+
+// Return From
+// GET https://zwiftpower.com/cache3/results/3859519_view.json
+export type ZwiftPowerEventViewResults = {
+  data: Array<ZwiftPowerEventViewResultsDataItem>;
+};
+export type ZwiftPowerEventViewResultsDataItem = {
+  DT_RowId: string;
+  ftp: string; // watts
+  friend: 0,
+  pt: string;
+  label: string;
+  zid: string; // zwift event grouping ID
+  pos: number;
+  position_in_cat: number;
+  name: string;
+  cp: number;
+  zwid: number; // atleteId
+  res_id: string;
+  lag: number;
+  uid: string;
+  time: [number, number]; // [1685.377, 0]
+  time_gun: number; // ride time in seconds
+  gap: number; // gap to leader in seconds
+  vtta: string;
+  vttat: number;
+  male: number; // 1 = yes, 0 = no
+  tid: string;
+  topen: string;
+  tname: string;
+  tc: string;
+  tbc: string;
+  tbd: string;
+  zeff: 0,
+  category: string; // "A"
+  height: [number, number]; // [176, 0] in cm
+  flag: string; // "at"
+  avg_hr: [number, number];
+  max_hr: [number, number];
+  hrmax: [number, number];
+  hrm: number; // 1 = has HRM, 0 = no HRM
+  weight: [string, number]; // ["65.0",0] in kg
+  power_type: number;
+  display_pos: number;
+  src: number;
+  age: string;
+  zada: number;
+  note: string;
+  div: number;
+  divw: number;
+  skill: number;
+  skill_b: string;
+  skill_gain: number;
+  np: [number, number]; // normalized power in watts
+  hrr: [string, number];
+  hreff: [string, number];
+  avg_power: [number, number]; // avg power in watts
+  avg_wkg: [string, number];
+  wkg_ftp: [string, number];
+  wftp: [number, number];
+  wkg_guess: number;
+  wkg1200: [string, number];
+  wkg300: [string, number];
+  wkg120: [string, number];
+  wkg60: [string, number];
+  wkg30: [string, number];
+  wkg15: [string, number];
+  wkg5: [string, number];
+  w1200: [string, number];
+  w300: [string, number];
+  w120: [string, number];
+  w60: [string, number];
+  w30: [string, number];
+  w15: [string, number];
+  w5: [string, number];
+  is_guess: number;
+  upg: number;
+  penalty: string;
+  reg: number;
+  fl: string;
+  pts: string;
+  pts_pos: string;
+  info: number;
+  info_notes: unknown[];
+  log: number;
+  lead: number;
+  sweep: number;
+  actid: string;
+  anal: number;
 };
 
 export type MaxPower = Record<string, number>; // key = time in seconds, value = power
@@ -177,6 +277,121 @@ export type ZwiftPowerProfile = {
 };
 
 // Return From
+// /cache3/profile/${athleteId}_all.json
+export type ZwiftPowerActivityResults = {
+  data: ZwiftPowerActivityResult[];
+};
+export type ZwiftPowerActivityResult = {
+  DT_RowId: string;
+  ftp: string; // watts
+  friend: number;
+  pt: string;
+  label: string;
+  zid: string; // zwift event id?
+  pos: number;
+  position_in_cat: number;
+  name: string; // athlete name
+  cp: number;
+  zwid: number; // athleteId
+  res_id: string;
+  lag: number;
+  uid: string; // "3148346963138872331"
+  time: [number, number]; // [6539.887, 0]
+  time_gun: number;
+  gap: number;
+  vtta: string;
+  vttat: number;
+  male: number; // 1 = true, 0 = false
+  tid: string;
+  topen: string;
+  tname: string; // team name
+  tc: string; // "ffffff"
+  tbc: string; // "2f1cbe";
+  tbd: string; // "ffffff"
+  zeff: number;
+  category: string; // "E"
+  height: [number, number]; // [172, 1] cm?
+  flag: string; // "us"
+  avg_hr: [number, number]; // [158, 0]
+  max_hr: [number, number]; // [184, 0]
+  hrmax: [number, number]; // [0, 0]
+  hrm: number; // 1=yes for has a heart rate monitor?
+  weight: [string, number]; // [ "78.0", 1] kg as a string
+  power_type: 3,
+  display_pos: 1,
+  src: 1,
+  age: string; // "Vet"
+  zada: number;
+  note: string;
+  div: number;
+  divw: number;
+  skill: string;
+  skill_b: number;
+  skill_gain: string;
+  np: [number, number]; // [181, 0] normalized power in watts
+  hrr: [string, number];
+  hreff: [string, number];
+  avg_power: [number, number]; // watts
+  avg_wkg: [string, number];
+  wkg_ftp: [string, number];
+  wftp: [number, number]; // watts
+  wkg_guess: number;
+  wkg1200: [string, number];
+  wkg300: [string, number];
+  wkg120: [string, number];
+  wkg60: [string, number];
+  wkg30: [string, number];
+  wkg15: [string, number];
+  wkg5: [string, number];
+  w1200: [string, number];
+  w300: [string, number];
+  w120: [string, number];
+  w60: [string, number];
+  w30: [string, number];
+  w15: [string, number];
+  w5: [string, number];
+  is_guess: number; // 1 = true, 0 = false
+  upg: number; // was athlete upgraded? 1=yes 0=no
+  penalty: string;
+  reg: number;
+  fl: string;
+  pts: string;
+  pts_pos: string;
+  info: number;
+  info_notes: unknown[];
+  strike: number;
+  event_title: string;
+  f_t: string; // "TYPE_RACE TYPE_RACE "
+  distance: number;
+  event_date: number; // 1600455600
+  rt: string;
+  laps: string;
+  dur: string;
+};
+
+// Return From
+// /api3.php?do=analysis&zwift_id=${athleteId}&zwift_event_id=${eventId}
+export type ZwiftPowerActivityAnalysis = {
+  xData: number[]; // distance in fractional km
+  x2Data: number[]; // seconds
+  vars: {
+    start: number; // start point in seconds?
+  };
+  datasets: Record<string, ZwiftPowerActivityAnalysisDataset>;
+};
+export type ZwiftPowerActivityAnalysisDataset = {
+  data: number[];
+  name: boolean;
+  type: string; // "area", "line"
+  unit: string; // "m", "watts", "bpm"
+  linecolor: string; // rgb hex
+  color: string; // rgb hex
+  height: number;
+  xaxis: boolean;
+  format_time: boolean;
+};
+
+// Return From
 // /api/profiles/${athleteId}/activities
 export type ZwiftActivities = Array<ZwiftActivitySummary>;
 export type ZwiftActivitySummary = {
@@ -196,7 +411,7 @@ export type ZwiftActivitySummary = {
   duration: string; // "1:4",
   distanceInMeters: number;
   fitFileBucket: string; // "s3-fit-prd-uswest2-zwift"
-  fitFileKey: string; // "prod/2822923/3a5d2bf5-1461969115156611104"
+  fitFileKey: string; // "prod/2822923/3a5d2bf5-1461969115156611104" prod/{athleteId}/___-{activityIdStr}
   totalElevation: number; // meters
   avgWatts: number;
   rideOnGiven: boolean;
@@ -577,4 +792,45 @@ export type ZwiftNotification = {
   argLong0: number;
   argLong1: number;
   argString0: string;
+};
+
+export type ZwiftActivityFitnessData = {
+  powerInWatts: number[];
+  cadencePerMin: number[];
+  heartRate: number[];
+  distanceInCm: number[];
+  speedInCmPerSec: number[];
+  timeInSec: number[];
+  altitudeInCm: number[];
+  latlng: Array<[number, number]>;
+};
+
+export type ZwiftActivityFeed = {
+  id: number;
+  id_str: string;
+  profile: {
+    id: string; // athleteId
+    firstName: string;
+    lastName: string;
+    imageSrc: string;
+    approvalRequired: unknown | null; // unknown?
+  };
+  worldId: number;
+  name: string;
+  sport: string;
+  startDate: string; // "2023-10-26T21:56:07.133+0000"
+  endDate: string; // "2023-10-26T22:49:32.462+0000"
+  distanceInMeters: number;
+  totalElevation: number;
+  calories: number;
+  primaryImageUrl: string;
+  feedImageThumbnailUrl: string;
+  lastSaveDate: string; // "2023-10-26T22:49:32.462+0000"
+  movingTimeInMs: number;
+  avgSpeedInMetersPerSecond: number;
+  activityRideOnCount: number;
+  activityCommentCount: number;
+  privacy: string; // "PUBLIC"
+  eventId: string | number | null;
+  rideOnGiven: boolean;
 };

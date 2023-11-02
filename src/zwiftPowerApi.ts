@@ -1,13 +1,16 @@
 import type {
+  ZwiftPowerActivityAnalysis,
+  ZwiftPowerActivityResults,
   ZwiftPowerCriticalPowerProfile,
   ZwiftPowerEventResults,
-} from '../types';
+  ZwiftPowerEventViewResults,
+} from './types';
 
 import https from 'https';
 import assert from 'assert';
-import { URL } from 'url';
 import { IncomingMessage } from 'http';
 import BaseApi from './baseApi';
+import { CookieJar } from 'tough-cookie';
 
 function _toJSON<T>(data: string): T {
   try {
@@ -19,14 +22,18 @@ function _toJSON<T>(data: string): T {
   }
 }
 
-export default class ZwiftPowerAPI extends BaseApi {
-  private _username: string;
-  private _password: string;
+export class ZwiftPowerAPI extends BaseApi {
+  private _username: string = '';
+  private _password: string = '';
 
-  constructor(username: string, password: string) {
+  constructor();
+  constructor(username: string, password: string);
+  constructor(username?: string, password?: string) {
     super();
-    this._username = username;
-    this._password = password;
+    if (username && password) {
+      this._username = username;
+      this._password = password;
+    }
   }
 
   async getAuthenticated(url:string, body: string | undefined = undefined, options = {}) {
@@ -56,7 +63,14 @@ export default class ZwiftPowerAPI extends BaseApi {
     return this.request(url, postData, options);
   }
 
-  async authenticate() {
+  async authenticate(cookies?: string): Promise<string> {
+    if(cookies) {
+      await this.setCookies(cookies);
+      if (await this._haveAuthCookie()) {
+        return cookies;
+      }
+    }
+
     const leg1response = await this.request('https://zwiftpower.com/ucp.php?mode=login&login=external&oauth_service=oauthzpsso');
     if (leg1response.resp.statusCode !== 302) {
       throw new Error(`Expected 302 got ${leg1response.resp.statusCode}`);
@@ -87,6 +101,8 @@ export default class ZwiftPowerAPI extends BaseApi {
     if (leg3response.resp.statusCode !== 302) {
       throw new Error(`Expected 302 got ${leg3response.resp.statusCode}`);
     }
+
+    return JSON.stringify(await this._cookieJar.serialize());
   }
 
   private async _haveAuthCookie() {
@@ -112,9 +128,40 @@ export default class ZwiftPowerAPI extends BaseApi {
     const url = `https://zwiftpower.com/cache3/results/${eventId}_zwift.json`;
     const result = await this.getAuthenticated(url);
     if(result.resp.statusCode !== 200) {
-      console.error(`getEventView(${eventId}) expected 200 got ${result.resp.statusCode}`);
+      console.error(`getEventResults(${eventId}) expected 200 got ${result.resp.statusCode}`);
       return undefined;
     }
     return _toJSON<ZwiftPowerEventResults>(result.data);
+  }
+
+  async getEventViewResults(eventId: string) {
+    const url = `https://zwiftpower.com/cache3/results/${eventId}_view.json`;
+    const result = await this.getAuthenticated(url);
+    if(result.resp.statusCode !== 200) {
+      console.error(`getEventViewResults(${eventId}) expected 200 got ${result.resp.statusCode}`);
+      return undefined;
+    }
+    return _toJSON<ZwiftPowerEventViewResults>(result.data);
+  }
+
+  // Recent activities for this athlete.
+  async getActivityResults(athleteId: string | number) {
+    const url = `https://zwiftpower.com/cache3/profile/${athleteId}_all.json`;
+    const result = await this.getAuthenticated(url);
+    if(result.resp.statusCode !== 200) {
+      console.error(`getActivityResults(${athleteId}) expected 200 got ${result.resp.statusCode}`);
+      return undefined;
+    }
+    return _toJSON<ZwiftPowerActivityResults>(result.data);
+  }
+
+  async getActivityAnalysis(eventId: string | number, athleteId: string | number) {
+    const url = `https://zwiftpower.com/api3.php?do=analysis&zwift_id=${athleteId}&zwift_event_id=${eventId}`;
+    const result = await this.getAuthenticated(url);
+    if(result.resp.statusCode !== 200) {
+      console.error(`getActivityAnalysis(${eventId}, ${athleteId}) expected 200 got ${result.resp.statusCode}`);
+      return undefined;
+    }
+    return _toJSON<ZwiftPowerActivityAnalysis>(result.data);
   }
 }

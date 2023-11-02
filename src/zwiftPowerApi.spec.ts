@@ -1,10 +1,11 @@
 import { expect, test, beforeAll, describe } from 'vitest';
-import ZwiftPowerAPI from './zwiftPowerApi';
+import { ZwiftPowerAPI } from './zwiftPowerApi';
+
+const athleteId = 2822923;
+const eventId = '3859519';
 
 describe('ZwiftPowerAPI', () => {
   let api: ZwiftPowerAPI;
-  const athleteId = 2822923;
-  const eventId = '3859519';
 
   beforeAll(() => {
     // authentication is time-intensive, so we do it once for all tests
@@ -28,5 +29,18 @@ describe('ZwiftPowerAPI', () => {
   test('getEventResults', async () => {
     const response = await api.getEventResults(eventId);
     expect(response).toHaveProperty('data');
+  });
+});
+
+describe('ZwiftPowerAPI auth token can be used between instances', () => {
+  test('auth cookies returned from authenticate() can be used to re-authenticate', async () => {
+    const api = new ZwiftPowerAPI(process.env.ZWIFT_USER as string, process.env.ZWIFT_PASS as string);
+    const cookies = await api.authenticate();
+    expect(cookies.length).toBeGreaterThan(0);
+
+    const api2 = new ZwiftPowerAPI();
+    await api2.authenticate(cookies);
+    const response = await api2.getCriticalPowerProfile(athleteId);
+    expect(response).toHaveProperty('efforts');
   });
 });

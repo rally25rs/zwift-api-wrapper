@@ -1,7 +1,7 @@
 import assert from 'assert';
 import BaseApi from './baseApi';
 import { RequestOptions } from 'https';
-import { ZwiftActivities, ZwiftActivity, ZwiftActivityFitnessData, ZwiftAthleteFollow, ZwiftEvent, ZwiftGameInfo, ZwiftNotification, ZwiftPowerProfile, ZwiftProfile } from '../types';
+import { ZwiftAPIOptions, ZwiftActivities, ZwiftActivity, ZwiftActivityFeed, ZwiftActivityFitnessData, ZwiftAthleteFollow, ZwiftAuthToken, ZwiftEvent, ZwiftGameInfo, ZwiftNotification, ZwiftPowerProfile, ZwiftProfile } from './types';
 
 const DEFAULT_REQUEST_TIMEOUT = 30000;
 
@@ -33,53 +33,74 @@ function toUrlSearchParams(query: ZwiftFetchOptions['query']): URLSearchParams {
   return query || new URLSearchParams();
 }
 
-export default class ZwiftAPI extends BaseApi {
+export class ZwiftAPI extends BaseApi {
   private _authHost: string = 'secure.zwift.com';
   private _apiHost: string = 'us-or-rly101.zwift.com';
-  private _username: string;
-  private _password: string;
-  private _authToken: {
-    access_token: string;
-    refresh_token: string;
-    expires_in: number;
-  } | undefined = undefined;
+  private _username: string = '';
+  private _password: string = '';
+  private _authToken: ZwiftAuthToken | undefined = undefined;
   private _nextRefresh: NodeJS.Timeout | undefined = undefined;
+  private _options: ZwiftAPIOptions = {};
 
-  constructor(username: string, password: string) {
+  constructor(options?: ZwiftAPIOptions);
+  constructor(username: string, password: string, options?: ZwiftAPIOptions);
+  constructor(usernameOrOptions: string | ZwiftAPIOptions | undefined, password?: string, options?: ZwiftAPIOptions) {
     super();
-    this._username = username;
-    this._password = password;
+
+    if (!usernameOrOptions) {
+      this._options = {};
+    } else if (typeof usernameOrOptions === 'object') {
+      this._options = usernameOrOptions;
+    } else {
+      this._username = usernameOrOptions;
+      this._password = password || '';
+      this._options = options || {};
+    }
   }
 
-  async authenticate(options: { host?: string } = {}) {
-    if (options.host) {
-      this._authHost = options.host;
+  async authenticate(authToken?: ZwiftAuthToken) {
+    if (authToken) {
+      this._authToken = authToken;
+      if (this._authToken?.access_token && (this._authToken?.expires_at || 0) > new Date().getTime()) {
+        return;
+      }
     }
-    const r = await this.fetch(
-      "/auth/realms/zwift/protocol/openid-connect/token",
-      {
-        host: options.host || this._authHost,
-        noAuth: true,
-        method: "POST",
-        ok: [200, 401],
-      },
-      {
-        accept: "application/json",
-      },
-      new URLSearchParams({
-        client_id: "Zwift Game Client",
-        grant_type: "password",
-        password: this._password,
-        username: this._username,
-      }).toString(),
-    );
-    const resp = r.data ? JSON.parse(r.data) : undefined;
-    if (r.resp.statusCode === 401) {
-      throw new Error(resp.error_description || "Login failed");
+    if ((this._authToken?.expires_at || 0) <= new Date().getTime() && this._authToken?.refresh_token) {
+      this._refreshToken();
+    } else if (this._username && this._password) {
+      const r = await this.fetch(
+        "/auth/realms/zwift/protocol/openid-connect/token",
+        {
+          host: this._authHost,
+          noAuth: true,
+          method: "POST",
+          ok: [200, 401],
+        },
+        {
+          accept: "application/json",
+        },
+        new URLSearchParams({
+          client_id: "Zwift Game Client",
+          grant_type: "password",
+          password: this._password,
+          username: this._username,
+        }).toString(),
+      );
+      const resp = r.data ? JSON.parse(r.data) : undefined;
+      if (r.resp.statusCode === 401) {
+        throw new Error(resp.error_description || "Login failed");
+      }
+      this._authToken = {
+        access_token: resp.access_token,
+        refresh_token: resp.refresh_token,
+        expires_at: resp.expires_in * 1000 + Date.now(),
+      };
+      assert(this._authToken, "Auth token not set");
+      this._schedRefresh(this._authToken.expires_at - 10000);
+    } else {
+      throw new Error('Login credentials not set');
     }
-    this._authToken = resp;
-    assert(this._authToken, "Auth token not set");
-    this._schedRefresh(this._authToken.expires_in * 1000 / 2);
+    return this._authToken;
   }
 
   private async _refreshToken() {
@@ -104,21 +125,28 @@ export default class ZwiftAPI extends BaseApi {
       }).toString(),
     );
     const resp = r.data ? JSON.parse(r.data) : undefined;
-    this._authToken = resp;
+    this._authToken = {
+      access_token: resp.access_token,
+      refresh_token: resp.refresh_token,
+      expires_at: resp.expires_in * 1000 + Date.now(),
+    };
     assert(this._authToken, "Auth token not set");
-    this._schedRefresh(this._authToken.expires_in * 1000 / 2);
+    this._schedRefresh(this._authToken.expires_at - 10000);
   }
 
-  _schedRefresh(delay: number) {
-    clearTimeout(this._nextRefresh);
-    this._nextRefresh = setTimeout(
-      this._refreshToken.bind(this),
-      Math.min(0x7fffffff, delay),
-    );
+  _schedRefresh(refreshAt: number) {
+    if(this._options?.autoRefreshAuth) {
+      const delay = refreshAt - Date.now();
+      clearTimeout(this._nextRefresh);
+      this._nextRefresh = setTimeout(
+        this._refreshToken.bind(this),
+        Math.min(0x7fffffff, delay),
+      );
+    }
   }
 
   isAuthenticated() {
-    return !!(this._authToken && this._authToken.access_token);
+    return !!(this._authToken?.access_token);
   }
 
   async fetch(
@@ -365,6 +393,16 @@ export default class ZwiftAPI extends BaseApi {
   async eventSubgroupSignup(id: string | number): Promise<unknown> {
     return await this.fetchJSON(`/api/events/subgroups/signup/${id}`, {
       method: "POST",
+    });
+  }
+
+  async getActivityFeed(): Promise<ZwiftActivityFeed[]> {
+    return await this.fetchJSON("/api/activity-feed/feed/", {
+      query: {
+        limit: 30,
+        includeInProgress: false,
+        feedType: "JUST_ME",
+      },
     });
   }
 }
