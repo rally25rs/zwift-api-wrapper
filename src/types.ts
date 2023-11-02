@@ -1,3 +1,13 @@
+// A wrapper around the http responses from the APIs.
+// Body is a passthrough of whatever the API returned, so may not actually match the type.
+// If the API returned an error message with its response, it will likely be in body.
+// If ZwiftAPIWrapper caught an exception, it will be in error.
+export type ZwiftAPIWrapperResponse<T> = {
+  statusCode: number;
+  error?: string;
+  body: T | undefined;
+};
+
 export type ZwiftAuthToken = {
   access_token: string;
   refresh_token: string;
@@ -250,7 +260,7 @@ export type ZwiftShortProfile = {
 
 // Return From
 // /api/power-curve/power-profile
-export type ZwiftPowerProfile = {
+export type ZwiftProfilePowerCurve = {
   zftp: number; // watts
   zmap: number; // watts
   vo2max: number; // ml/kg/min

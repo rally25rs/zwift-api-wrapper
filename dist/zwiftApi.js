@@ -63,8 +63,8 @@ class ZwiftAPI extends baseApi_1.default {
                 password: this._password,
                 username: this._username,
             }).toString());
-            const resp = r.data ? JSON.parse(r.data) : undefined;
-            if (r.resp.statusCode === 401) {
+            const resp = r.body ? JSON.parse(r.body) : undefined;
+            if (r.statusCode === 401) {
                 throw new Error(resp.error_description || "Login failed");
             }
             this._authToken = {
@@ -96,7 +96,7 @@ class ZwiftAPI extends baseApi_1.default {
             grant_type: "refresh_token",
             refresh_token: this._authToken.refresh_token,
         }).toString());
-        const resp = r.data ? JSON.parse(r.data) : undefined;
+        const resp = r.body ? JSON.parse(r.body) : undefined;
         this._authToken = {
             access_token: resp.access_token,
             refresh_token: resp.refresh_token,
@@ -161,11 +161,16 @@ class ZwiftAPI extends baseApi_1.default {
             }
         }
         if (!r.resp.statusCode || (options.ok && !options.ok.includes(r.resp.statusCode)) || (!options.ok && r.resp.statusCode >= 400)) {
-            const msg = r.data;
-            const e = new Error(`Zwift HTTP Error: [${r.resp.statusCode}]: ${msg}`);
-            throw e;
+            return {
+                statusCode: r.resp.statusCode || 0,
+                error: r.data,
+                body: r.data,
+            };
         }
-        return r;
+        return {
+            statusCode: r.resp.statusCode || 0,
+            body: r.data,
+        };
     }
     async fetchPaged(urn, options = {}, headers) {
         const results = [];
@@ -177,7 +182,14 @@ class ZwiftAPI extends baseApi_1.default {
         query.set("limit", limit.toString());
         while (true) {
             query.set("start", start.toString());
-            const page = await this.fetchJSON(urn, { query, ...options }, headers);
+            const resp = await this.fetchJSON(urn, { query, ...options }, headers);
+            if (resp.statusCode >= 400) {
+                return resp;
+            }
+            if (!resp.body) {
+                return resp;
+            }
+            const page = resp.body;
             for (const x of page) {
                 results.push(x);
             }
@@ -191,51 +203,40 @@ class ZwiftAPI extends baseApi_1.default {
             }
             start = results.length;
         }
-        return results;
+        return {
+            statusCode: 200,
+            body: results,
+        };
     }
     async fetchJSON(urn, options = {}, headers = {}) {
         headers.accept = "application/json";
-        const r = await this.fetch(urn, options, headers);
-        if (r.resp.statusCode === 204) {
-            return;
-        }
-        return JSON.parse(r.data);
-    }
-    async getProfile(athleteId, options = {}) {
         try {
-            return await this.fetchJSON(`/api/profiles/${athleteId}`, options);
+            const r = await this.fetch(urn, options, headers);
+            return {
+                statusCode: r.statusCode || 0,
+                error: r.error,
+                body: (r.statusCode === 204 || r.statusCode === 404) ? undefined : JSON.parse(r.body || ''),
+            };
         }
         catch (e) {
-            if (e.status === 404) {
-                return;
-            }
-            throw e;
+            return {
+                statusCode: e.status || 0,
+                error: e.message,
+                body: e.data
+            };
         }
+    }
+    async getProfile(athleteId, options = {}) {
+        return await this.fetchJSON(`/api/profiles/${athleteId}`, options);
     }
     async getPowerProfile() {
         return await this.fetchJSON(`/api/power-curve/power-profile`);
     }
     async getActivities(athleteId) {
-        try {
-            return await this.fetchJSON(`/api/profiles/${athleteId}/activities`);
-        }
-        catch (e) {
-            if (e.status === 404) {
-                return;
-            }
-            throw e;
-        }
+        return await this.fetchJSON(`/api/profiles/${athleteId}/activities`);
     }
     async getActivity(id, fetchSnapshots = false, fetchEvent = false) {
-        try {
-            return await this.fetchJSON(`/api/activities/${id}?fetchSnapshots=${fetchSnapshots ? 'true' : 'false'}&fetchEvent=${fetchEvent ? 'true' : 'false'}`);
-        }
-        catch (e) {
-            if (e.status === 404) {
-                return;
-            }
-            throw e;
-        }
+        return await this.fetchJSON(`/api/activities/${id}?fetchSnapshots=${fetchSnapshots ? 'true' : 'false'}&fetchEvent=${fetchEvent ? 'true' : 'false'}`);
     }
     async getGameInfo() {
         return await this.fetchJSON(`/api/game_info`, { apiVersion: "2.7" });
@@ -275,51 +276,22 @@ class ZwiftAPI extends baseApi_1.default {
         return await this.fetchJSON(`/api/private_event/${id}`);
     }
     async getEventSubgroupResults(eventSubgroupId) {
-        let start = 0;
-        const limit = 50; // 50 is max, but the endpoint is wicked fast
-        const results = [];
-        while (true) {
-            const data = await this.fetchJSON(`/api/race-results/entries`, {
-                query: {
-                    event_subgroup_id: eventSubgroupId,
-                    start,
-                    limit,
-                },
-            });
-            for (const x of data.entries) {
-                x.profileData.male = x.profileData.gender === "MALE";
-                results.push(x);
-            }
-            if (data.entries.length < limit) {
-                break;
-            }
-            start += data.entries.length;
-        }
-        return results;
+        return await this.fetchPaged(`/api/race-results/entries`, {
+            query: {
+                event_subgroup_id: eventSubgroupId,
+            },
+        });
     }
     async getEvent(id) {
         return await this.fetchJSON(`/api/events/${id}`);
     }
     async getEventSubgroupEntrants(id) {
-        const entrants = [];
-        const limit = 100;
-        let start = 0;
-        while (true) {
-            const data = await this.fetchJSON(`/api/events/subgroups/entrants/${id}`, {
-                query: {
-                    type: "all",
-                    participation: "signed_up",
-                    limit,
-                    start,
-                },
-            });
-            entrants.push(...data);
-            if (data.length < limit) {
-                break;
-            }
-            start += data.length;
-        }
-        return entrants;
+        return this.fetchPaged(`/api/events/subgroups/entrants/${id}`, {
+            query: {
+                type: "all",
+                participation: "signed_up",
+            },
+        });
     }
     async getActivityFitnessData(url) {
         return await this.fetchJSON(url);

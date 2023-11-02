@@ -1,4 +1,5 @@
 import type {
+  ZwiftAPIWrapperResponse,
   ZwiftPowerActivityAnalysis,
   ZwiftPowerActivityResults,
   ZwiftPowerCriticalPowerProfile,
@@ -12,13 +13,26 @@ import { IncomingMessage } from 'http';
 import BaseApi from './baseApi';
 import { CookieJar } from 'tough-cookie';
 
-function _toJSON<T>(data: string): T {
+function _toJSON<T>(response: ZwiftAPIWrapperResponse<string>): ZwiftAPIWrapperResponse<T> {
   try {
-    return JSON.parse(data);
+    if(!response.body) {
+      return {
+        ...response,
+        body: undefined,
+      };
+    }
+    return {
+      ...response,
+      body: JSON.parse(response.body) as T,
+    };
   } catch (e) {
     console.error(`Error parsing JSON`);
-    console.error(data);
-    throw e;
+    console.error(response.body);
+    return {
+      ...response,
+      error: `Error parsing JSON: ${response.body}}`,
+      body: undefined,
+    };
   }
 }
 
@@ -36,11 +50,21 @@ export class ZwiftPowerAPI extends BaseApi {
     }
   }
 
-  async getAuthenticated(url:string, body: string | undefined = undefined, options = {}) {
+  async getAuthenticated(
+    url: string,
+    body: string | undefined = undefined,
+    options = {},
+  ): Promise<ZwiftAPIWrapperResponse<string>> {
     if (!await this._haveAuthCookie()) {
       await this.authenticate();
     }
-    return await this.request(url, body, options);
+    const response = await this.request(url, body, options);
+    const statusCode = response.resp.statusCode || 0;
+    return {
+      statusCode,
+      error: (statusCode === 0 || statusCode >= 400) ? response.data : undefined,
+      body: response.data,
+    };
   }
 
   // Submit Zwift login form
@@ -114,54 +138,34 @@ export class ZwiftPowerAPI extends BaseApi {
     athleteId: string | number,
     eventId: string | number = '',
     type: string = 'watts',
-  ): Promise<ZwiftPowerCriticalPowerProfile | undefined> {
+  ): Promise<ZwiftAPIWrapperResponse<ZwiftPowerCriticalPowerProfile>> {
     const url = `https://zwiftpower.com/api3.php?do=critical_power_profile&zwift_id=${encodeURIComponent(athleteId)}&zwift_event_id=${eventId}&type=${type}`;
     const result = await this.getAuthenticated(url);
-    if(result.resp.statusCode !== 200) {
-      console.error(`getCriticalPowerProfile(${athleteId}) expected 200 got ${result.resp.statusCode}`);
-      return undefined;
-    }
-    return _toJSON<ZwiftPowerCriticalPowerProfile>(result.data);
+    return _toJSON<ZwiftPowerCriticalPowerProfile>(result);
   }
 
-  async getEventResults(eventId: string) {
+  async getEventResults(eventId: string): Promise<ZwiftAPIWrapperResponse<ZwiftPowerEventResults>> {
     const url = `https://zwiftpower.com/cache3/results/${eventId}_zwift.json`;
     const result = await this.getAuthenticated(url);
-    if(result.resp.statusCode !== 200) {
-      console.error(`getEventResults(${eventId}) expected 200 got ${result.resp.statusCode}`);
-      return undefined;
-    }
-    return _toJSON<ZwiftPowerEventResults>(result.data);
+    return _toJSON<ZwiftPowerEventResults>(result);
   }
 
-  async getEventViewResults(eventId: string) {
+  async getEventViewResults(eventId: string): Promise<ZwiftAPIWrapperResponse<ZwiftPowerEventViewResults>> {
     const url = `https://zwiftpower.com/cache3/results/${eventId}_view.json`;
     const result = await this.getAuthenticated(url);
-    if(result.resp.statusCode !== 200) {
-      console.error(`getEventViewResults(${eventId}) expected 200 got ${result.resp.statusCode}`);
-      return undefined;
-    }
-    return _toJSON<ZwiftPowerEventViewResults>(result.data);
+    return _toJSON<ZwiftPowerEventViewResults>(result);
   }
 
   // Recent activities for this athlete.
-  async getActivityResults(athleteId: string | number) {
+  async getActivityResults(athleteId: string | number): Promise<ZwiftAPIWrapperResponse<ZwiftPowerActivityResults>> {
     const url = `https://zwiftpower.com/cache3/profile/${athleteId}_all.json`;
     const result = await this.getAuthenticated(url);
-    if(result.resp.statusCode !== 200) {
-      console.error(`getActivityResults(${athleteId}) expected 200 got ${result.resp.statusCode}`);
-      return undefined;
-    }
-    return _toJSON<ZwiftPowerActivityResults>(result.data);
+    return _toJSON<ZwiftPowerActivityResults>(result);
   }
 
-  async getActivityAnalysis(eventId: string | number, athleteId: string | number) {
+  async getActivityAnalysis(eventId: string | number, athleteId: string | number): Promise<ZwiftAPIWrapperResponse<ZwiftPowerActivityAnalysis>> {
     const url = `https://zwiftpower.com/api3.php?do=analysis&zwift_id=${athleteId}&zwift_event_id=${eventId}`;
     const result = await this.getAuthenticated(url);
-    if(result.resp.statusCode !== 200) {
-      console.error(`getActivityAnalysis(${eventId}, ${athleteId}) expected 200 got ${result.resp.statusCode}`);
-      return undefined;
-    }
-    return _toJSON<ZwiftPowerActivityAnalysis>(result.data);
+    return _toJSON<ZwiftPowerActivityAnalysis>(result);
   }
 }

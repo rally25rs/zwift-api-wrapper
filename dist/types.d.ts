@@ -1,3 +1,8 @@
+export type ZwiftAPIWrapperResponse<T> = {
+    statusCode: number;
+    error?: string;
+    body: T | undefined;
+};
 export type ZwiftAuthToken = {
     access_token: string;
     refresh_token: string;
@@ -244,7 +249,7 @@ export type ZwiftShortProfile = {
     currentActivityId: number | null;
     likelyInGame: boolean;
 };
-export type ZwiftPowerProfile = {
+export type ZwiftProfilePowerCurve = {
     zftp: number;
     zmap: number;
     vo2max: number;

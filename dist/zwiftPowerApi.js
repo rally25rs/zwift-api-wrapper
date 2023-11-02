@@ -6,14 +6,27 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ZwiftPowerAPI = void 0;
 const assert_1 = __importDefault(require("assert"));
 const baseApi_1 = __importDefault(require("./baseApi"));
-function _toJSON(data) {
+function _toJSON(response) {
     try {
-        return JSON.parse(data);
+        if (!response.body) {
+            return {
+                ...response,
+                body: undefined,
+            };
+        }
+        return {
+            ...response,
+            body: JSON.parse(response.body),
+        };
     }
     catch (e) {
         console.error(`Error parsing JSON`);
-        console.error(data);
-        throw e;
+        console.error(response.body);
+        return {
+            ...response,
+            error: `Error parsing JSON: ${response.body}}`,
+            body: undefined,
+        };
     }
 }
 class ZwiftPowerAPI extends baseApi_1.default {
@@ -30,7 +43,13 @@ class ZwiftPowerAPI extends baseApi_1.default {
         if (!await this._haveAuthCookie()) {
             await this.authenticate();
         }
-        return await this.request(url, body, options);
+        const response = await this.request(url, body, options);
+        const statusCode = response.resp.statusCode || 0;
+        return {
+            statusCode,
+            error: (statusCode === 0 || statusCode >= 400) ? response.data : undefined,
+            body: response.data,
+        };
     }
     // Submit Zwift login form
     async _doLoginSubmit(url, options = {}, username, password) {
@@ -88,48 +107,28 @@ class ZwiftPowerAPI extends baseApi_1.default {
     async getCriticalPowerProfile(athleteId, eventId = '', type = 'watts') {
         const url = `https://zwiftpower.com/api3.php?do=critical_power_profile&zwift_id=${encodeURIComponent(athleteId)}&zwift_event_id=${eventId}&type=${type}`;
         const result = await this.getAuthenticated(url);
-        if (result.resp.statusCode !== 200) {
-            console.error(`getCriticalPowerProfile(${athleteId}) expected 200 got ${result.resp.statusCode}`);
-            return undefined;
-        }
-        return _toJSON(result.data);
+        return _toJSON(result);
     }
     async getEventResults(eventId) {
         const url = `https://zwiftpower.com/cache3/results/${eventId}_zwift.json`;
         const result = await this.getAuthenticated(url);
-        if (result.resp.statusCode !== 200) {
-            console.error(`getEventResults(${eventId}) expected 200 got ${result.resp.statusCode}`);
-            return undefined;
-        }
-        return _toJSON(result.data);
+        return _toJSON(result);
     }
     async getEventViewResults(eventId) {
         const url = `https://zwiftpower.com/cache3/results/${eventId}_view.json`;
         const result = await this.getAuthenticated(url);
-        if (result.resp.statusCode !== 200) {
-            console.error(`getEventViewResults(${eventId}) expected 200 got ${result.resp.statusCode}`);
-            return undefined;
-        }
-        return _toJSON(result.data);
+        return _toJSON(result);
     }
     // Recent activities for this athlete.
     async getActivityResults(athleteId) {
         const url = `https://zwiftpower.com/cache3/profile/${athleteId}_all.json`;
         const result = await this.getAuthenticated(url);
-        if (result.resp.statusCode !== 200) {
-            console.error(`getActivityResults(${athleteId}) expected 200 got ${result.resp.statusCode}`);
-            return undefined;
-        }
-        return _toJSON(result.data);
+        return _toJSON(result);
     }
     async getActivityAnalysis(eventId, athleteId) {
         const url = `https://zwiftpower.com/api3.php?do=analysis&zwift_id=${athleteId}&zwift_event_id=${eventId}`;
         const result = await this.getAuthenticated(url);
-        if (result.resp.statusCode !== 200) {
-            console.error(`getActivityAnalysis(${eventId}, ${athleteId}) expected 200 got ${result.resp.statusCode}`);
-            return undefined;
-        }
-        return _toJSON(result.data);
+        return _toJSON(result);
     }
 }
 exports.ZwiftPowerAPI = ZwiftPowerAPI;
