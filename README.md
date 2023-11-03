@@ -108,6 +108,13 @@ yarn install
 ```
 
 Run tests
+_Note:_ The unit tests hit the live Zwift APIs, so require a login.
+Set your own Zwift username and password in a `.env` file in the root of this project, with the env vars:
+```
+ZWIFT_USER=...
+ZWIFT_PASS=...
+```
+The `.env` file is in the `.gitignore` so you shouldn't have to worry about it getting accidentally comitted, but do pay attention when doing a git commit.
 ```
 yarn test
 ```
@@ -125,5 +132,7 @@ git commit, push, and open a PR.
 
 * Update `CHANGELOG.md`
 * [yarn version](https://yarnpkg.com/cli/version)
+* `git commit -am "..."`
+* `git tag v0.0.0`
 * `git push`
 * `yarn publish`
