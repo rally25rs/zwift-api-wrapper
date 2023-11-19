@@ -1,5 +1,7 @@
-import { beforeAll, describe, expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import { ConnectionPool } from "./connectionPool";
+
+const eventId = '3859519';
 
 describe("ConnectionPool", () => {
   test("constructor throws if no credentials", () => {
@@ -55,6 +57,23 @@ describe("ConnectionPool", () => {
         }],
       });
       await expect(pool.getZwiftAPIAndAuthenticate()).rejects.toThrow();
+    });
+  });
+
+  describe("getZwiftPowerAPIAndAuthenticate", () => {
+    test("generally works", async () => {
+      const pool = new ConnectionPool({
+        credentials: [{
+          username: process.env.ZWIFT_USER as string,
+          password: process.env.ZWIFT_PASS as string,
+        }],
+      });
+      const api = await pool.getZwiftPowerAPIAndAuthenticate();
+      const results = await api.getEventResults(eventId);
+      expect(results).toBeDefined();
+      expect(results.statusCode).toEqual(200);
+      expect(results.error).toBeUndefined();
+      expect(results.body).toBeDefined();
     });
   });
 });

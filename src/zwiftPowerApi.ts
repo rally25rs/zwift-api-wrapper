@@ -11,7 +11,6 @@ import https from 'https';
 import assert from 'assert';
 import { IncomingMessage } from 'http';
 import BaseApi from './baseApi';
-import { CookieJar } from 'tough-cookie';
 
 function _toJSON<T>(response: ZwiftAPIWrapperResponse<string>): ZwiftAPIWrapperResponse<T> {
   try {

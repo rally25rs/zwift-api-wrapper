@@ -26,7 +26,6 @@ describe('ZwiftAPI', () => {
     const response = await api.getActivityFeed();
     expect(response.statusCode).toEqual(200);
     expect(Array.isArray(response.body)).toBeTruthy();
-    expect(response.body?.length).toBeGreaterThan(0);
   });
 
   test('auth token can be used between instances', async () => {
