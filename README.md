@@ -44,6 +44,34 @@ const zwiftAuthCreds = await zwiftApi.authenticate(zwiftAuthCreds); // pass prev
 const profile = await zwiftApi.getProfile(athleteId);
 ```
 
+### Connection Pooling
+
+This library contains some simplistic pooling of connections in the `ConnectionPool` class.
+
+```
+const pool = new ConnectionPool({
+  credentials: [{
+    username: "user1",
+    password: "pass1",
+  }, {
+    username: "user2",
+    password: "pass2",
+  }],
+});
+
+const zwiftApi = pool.getZwiftAPI();
+const zwiftPowerApi = pool.getZwiftPowerAPI();
+
+const zwiftApi2 = await pool.getZwiftAPIAndAuthenticate();
+const zwiftPowerApi2 = await pool.getZwiftPowerAPIAndAuthenticate();
+```
+
+The credentials in the pool are used round-robin.
+
+The `*AndAuthenticate()` methods will get the next connection from the pool rotation, and also call `.authenticate()` on the connection for you. If the call throws an exception, the next connection from the pool will be tried. If all connections fail to authenticate, an exception will be thrown.
+
+Note that ZwiftPower authentication calls can be very slow (a couple seconds) so if you have 10 sets of connections and ZwiftPower is down or all credentials become invalid, `await pool.getZwiftPowerAPIAndAuthenticate()` could take 30 seconds before throwing.
+
 ### API Responses
 
 To provide some level of consistency across APIs, most methods will return a type `ZwiftAPIWrapperResponse<T>`.

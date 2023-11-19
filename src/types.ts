@@ -1,3 +1,10 @@
+export type ConnectionPoolConfiguration = {
+  credentials: Array<{
+    username: string;
+    password: string;
+  }>;
+};
+
 // A wrapper around the http responses from the APIs.
 // Body is a passthrough of whatever the API returned, so may not actually match the type.
 // If the API returned an error message with its response, it will likely be in body.
