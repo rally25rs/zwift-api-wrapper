@@ -3,6 +3,7 @@ export type ConnectionPoolConfiguration = {
     username: string;
     password: string;
   }>;
+  debug?: boolean;
 };
 
 // A wrapper around the http responses from the APIs.

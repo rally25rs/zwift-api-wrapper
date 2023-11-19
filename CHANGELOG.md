@@ -2,6 +2,10 @@
 
 * (none)
 
+# v0.0.4
+
+* Added `debug` option to `ConnectionPool` class.
+
 # v0.0.3
 
 * Added `ConnectionPool` class.

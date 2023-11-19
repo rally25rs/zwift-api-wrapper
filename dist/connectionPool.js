@@ -8,7 +8,9 @@ class ConnectionPool {
     _zwiftPowerConnections = [];
     _prevZwiftConnection = 0;
     _prevZwiftPowerConnection = 0;
+    _debug = false;
     constructor(configuration) {
+        this._debug = configuration.debug || false;
         if ((configuration?.credentials ?? []).length === 0) {
             throw new Error("No credentials provided");
         }
@@ -16,47 +18,66 @@ class ConnectionPool {
             this._zwiftConnections.push(new zwiftApi_1.ZwiftAPI(creds.username, creds.password));
             this._zwiftPowerConnections.push(new zwiftPowerApi_1.ZwiftPowerAPI(creds.username, creds.password));
         });
+        if (this._debug) {
+            console.log(`ConnectionPool: Constructed ${this._zwiftConnections.length} connections.`);
+        }
     }
     getZwiftAPI() {
         this._prevZwiftConnection = (this._prevZwiftConnection + 1) % this._zwiftConnections.length;
+        if (this._debug) {
+            console.log(`ConnectionPool: getZwiftApi returning connection [${this._prevZwiftConnection}].`);
+        }
         return this._zwiftConnections[this._prevZwiftConnection];
     }
     async getZwiftAPIAndAuthenticate() {
-        this._prevZwiftConnection = (this._prevZwiftConnection + 1) % this._zwiftConnections.length;
-        const startIdx = this._prevZwiftConnection;
-        let currIdx = startIdx;
-        let connection;
-        do {
+        const startIdx = (this._prevZwiftConnection + 1) % this._zwiftConnections.length;
+        for (let i = 0; i < this._zwiftConnections.length; i++) {
+            const tryIdx = (startIdx + i) % this._zwiftConnections.length;
+            const connection = this._zwiftConnections[tryIdx];
             try {
-                connection = this._zwiftConnections[currIdx];
+                if (this._debug) {
+                    console.log(`ConnectionPool: getZwiftAPIAndAuthenticate trying connection [${tryIdx}].`);
+                }
                 await connection.authenticate();
+                this._prevZwiftConnection = tryIdx;
+                if (this._debug) {
+                    console.log(`ConnectionPool: getZwiftAPIAndAuthenticate returning connection [${tryIdx}].`);
+                }
                 return connection;
             }
             catch (e) {
-                currIdx = (currIdx + 1) % this._zwiftConnections.length;
+                // do nothing
             }
-        } while (currIdx !== startIdx);
+        }
         throw new Error("No valid connection found");
     }
     getZwiftPowerAPI() {
         this._prevZwiftPowerConnection = (this._prevZwiftPowerConnection + 1) % this._zwiftPowerConnections.length;
+        if (this._debug) {
+            console.log(`ConnectionPool: getZwiftPowerApi returning connection [${this._prevZwiftConnection}].`);
+        }
         return this._zwiftPowerConnections[this._prevZwiftPowerConnection];
     }
     async getZwiftPowerAPIAndAuthenticate() {
-        this._prevZwiftPowerConnection = (this._prevZwiftPowerConnection + 1) % this._zwiftPowerConnections.length;
-        const startIdx = this._prevZwiftPowerConnection;
-        let currIdx = startIdx;
-        let connection;
-        do {
+        const startIdx = (this._prevZwiftPowerConnection + 1) % this._zwiftPowerConnections.length;
+        for (let i = 0; i < this._zwiftPowerConnections.length; i++) {
+            const tryIdx = (startIdx + i) % this._zwiftPowerConnections.length;
+            const connection = this._zwiftPowerConnections[tryIdx];
             try {
-                connection = this._zwiftPowerConnections[currIdx];
+                if (this._debug) {
+                    console.log(`ConnectionPool: getZwiftPowerAPIAndAuthenticate trying connection [${tryIdx}].`);
+                }
                 await connection.authenticate();
+                this._prevZwiftPowerConnection = tryIdx;
+                if (this._debug) {
+                    console.log(`ConnectionPool: getZwiftPowerAPIAndAuthenticate returning connection [${tryIdx}].`);
+                }
                 return connection;
             }
             catch (e) {
-                currIdx = (currIdx + 1) % this._zwiftPowerConnections.length;
+                // do nothing
             }
-        } while (currIdx !== startIdx);
+        }
         throw new Error("No valid connection found");
     }
 }

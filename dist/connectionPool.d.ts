@@ -6,6 +6,7 @@ export declare class ConnectionPool {
     private _zwiftPowerConnections;
     private _prevZwiftConnection;
     private _prevZwiftPowerConnection;
+    private _debug;
     constructor(configuration: ConnectionPoolConfiguration);
     getZwiftAPI(): ZwiftAPI;
     getZwiftAPIAndAuthenticate(): Promise<ZwiftAPI>;

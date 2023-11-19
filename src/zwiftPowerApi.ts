@@ -86,6 +86,10 @@ export class ZwiftPowerAPI extends BaseApi {
     return this.request(url, postData, options);
   }
 
+  private _fixRedirect(location: string): string {
+    return URL.canParse(location) ? location : `https://zwiftpower.com/${location}`;
+  }
+
   async authenticate(cookies?: string): Promise<string> {
     if(cookies) {
       await this.setCookies(cookies);
@@ -101,7 +105,7 @@ export class ZwiftPowerAPI extends BaseApi {
     const leg1Location = leg1response.resp.headers['location'];
     assert(leg1Location, `Expected location header`);
 
-    const leg2response = await this.request(leg1Location);
+    const leg2response = await this.request(this._fixRedirect(leg1Location));
     let leg3Location;
     if (leg2response.resp.statusCode === 200) {
       const loginSubmitUrl = leg2response.data.match(/<form .* action="([^"]+)"/)?.[1]?.replace(/&amp;/g, '&')
@@ -120,7 +124,7 @@ export class ZwiftPowerAPI extends BaseApi {
     }
 
     assert(leg3Location, `Expected location header`);
-    const leg3response = await this.request(leg3Location);
+    const leg3response = await this.request(this._fixRedirect(leg3Location));
     if (leg3response.resp.statusCode !== 302) {
       throw new Error(`Expected 302 got ${leg3response.resp.statusCode}`);
     }

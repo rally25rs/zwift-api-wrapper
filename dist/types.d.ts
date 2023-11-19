@@ -3,6 +3,7 @@ export type ConnectionPoolConfiguration = {
         username: string;
         password: string;
     }>;
+    debug?: boolean;
 };
 export type ZwiftAPIWrapperResponse<T> = {
     statusCode: number;

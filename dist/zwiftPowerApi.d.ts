@@ -7,6 +7,7 @@ export declare class ZwiftPowerAPI extends BaseApi {
     constructor(username: string, password: string);
     getAuthenticated(url: string, body?: string | undefined, options?: {}): Promise<ZwiftAPIWrapperResponse<string>>;
     private _doLoginSubmit;
+    private _fixRedirect;
     authenticate(cookies?: string): Promise<string>;
     private _haveAuthCookie;
     getCriticalPowerProfile(athleteId: string | number, eventId?: string | number, type?: string): Promise<ZwiftAPIWrapperResponse<ZwiftPowerCriticalPowerProfile>>;
