@@ -2,6 +2,10 @@
 
 * (none)
 
+# v0.0.3
+
+* Added `ConnectionPool` class.
+
 # v0.0.2
 
 * Re-export types from `/types.ts` so library consumers don't have to use `/dist/types.d.ts` in their imports.

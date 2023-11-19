@@ -1,3 +1,9 @@
+export type ConnectionPoolConfiguration = {
+    credentials: Array<{
+        username: string;
+        password: string;
+    }>;
+};
 export type ZwiftAPIWrapperResponse<T> = {
     statusCode: number;
     error?: string;
