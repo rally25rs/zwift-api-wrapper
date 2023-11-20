@@ -5,7 +5,7 @@ import { ZwiftAuthToken } from './types';
 const athleteId = 2822923;
 const eventId = '3859519';
 
-describe('ZwiftAPI', () => {
+describe('ZwiftAPI when authenticated', () => {
   let api: ZwiftAPI;
   let authTokens: ZwiftAuthToken | undefined;
 
@@ -34,5 +34,16 @@ describe('ZwiftAPI', () => {
     const response = await api2.getProfile(athleteId);
     expect(response.statusCode).toEqual(200);
     expect(response.body?.id).toEqual(athleteId);
+  });
+
+  test('isAuthenticated returns true', async () => {
+    expect(await api.isAuthenticated()).toEqual(true);
+  });
+});
+
+describe('ZwiftAPI when not authenticated', () => {
+  test('isAuthenticated returns false', async () => {
+    const api = new ZwiftAPI(process.env.ZWIFT_USER as string, process.env.ZWIFT_PASS as string);
+    expect(api.isAuthenticated()).toEqual(false);
   });
 });

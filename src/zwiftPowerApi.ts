@@ -54,7 +54,7 @@ export class ZwiftPowerAPI extends BaseApi {
     body: string | undefined = undefined,
     options = {},
   ): Promise<ZwiftAPIWrapperResponse<string>> {
-    if (!await this._haveAuthCookie()) {
+    if (!await this.isAuthenticated()) {
       await this.authenticate();
     }
     const response = await this.request(url, body, options);
@@ -93,7 +93,7 @@ export class ZwiftPowerAPI extends BaseApi {
   async authenticate(cookies?: string): Promise<string> {
     if(cookies) {
       await this.setCookies(cookies);
-      if (await this._haveAuthCookie()) {
+      if (await this.isAuthenticated()) {
         return cookies;
       }
     }
@@ -132,7 +132,7 @@ export class ZwiftPowerAPI extends BaseApi {
     return JSON.stringify(await this._cookieJar.serialize());
   }
 
-  private async _haveAuthCookie() {
+  async isAuthenticated() {
     const cookies = await this._cookieJar.getCookies('https://zwiftpower.com/', {allPaths: true, expire: true});
     return !!cookies.find(c => c.key === 'phpbb3_lswlk_sid');
   }

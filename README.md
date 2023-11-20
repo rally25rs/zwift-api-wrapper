@@ -30,7 +30,7 @@ const eventResults = await zwiftPowerApi.getEventResults(eventId);
 
 ### Authentication
 
-Both classes have an async `authenticate()` method that returns the credentials for that API as a string. These strings can be re-passed to `authenticate()` on another API instance to persist login if needed. This is primarily to facilitate using this library on a stateless server without having to re-authenticate to Zwift for every request.
+Both classes have async `authenticate()` method that returns the credentials for that API as a string. These strings can be re-passed to `authenticate()` on another API instance to persist login if needed. This is primarily to facilitate using this library on a stateless server without having to re-authenticate to Zwift for every request.
 
 ```
 // authenticate to one instance
@@ -43,6 +43,10 @@ const zwiftApi = new ZwiftAPI(); // no need to pass user/pwd as long as creds wi
 const zwiftAuthCreds = await zwiftApi.authenticate(zwiftAuthCreds); // pass previous creds here
 const profile = await zwiftApi.getProfile(athleteId);
 ```
+
+The `authenticate()` functions will perform re-authentication even if there are already stored valid credentials.
+
+The `isAuthenticated()` method can be used to determine if the API class thinks it has credentials it can use. Note that this isn't a guarantee that the API call will be successful. The Zwift of ZwiftPower API might still reject the auth token or cookie this API passes.
 
 ### Connection Pooling
 
@@ -68,7 +72,7 @@ const zwiftPowerApi2 = await pool.getZwiftPowerAPIAndAuthenticate();
 
 The credentials in the pool are used round-robin.
 
-The `*AndAuthenticate()` methods will get the next connection from the pool rotation, and also call `.authenticate()` on the connection for you. If the call throws an exception, the next connection from the pool will be tried. If all connections fail to authenticate, an exception will be thrown.
+The `*AndAuthenticate()` methods will get the next connection from the pool rotation, and also call `.authenticate()` on the connection for you, if `isAuthenticated()` returns `false`. If the call throws an exception, the next connection from the pool will be tried. If all connections fail to authenticate, an exception will be thrown.
 
 Note that ZwiftPower authentication calls can be very slow (a couple seconds) so if you have 10 sets of connections and ZwiftPower is down or all credentials become invalid, `await pool.getZwiftPowerAPIAndAuthenticate()` could take 30 seconds before throwing.
 

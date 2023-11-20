@@ -4,7 +4,7 @@ import { ZwiftPowerAPI } from './zwiftPowerApi';
 const athleteId = 2822923;
 const eventId = '3859519';
 
-describe('ZwiftPowerAPI', () => {
+describe('ZwiftPowerAPI when authenticated', () => {
   let api: ZwiftPowerAPI;
   let authTokens: string | undefined;
 
@@ -42,5 +42,16 @@ describe('ZwiftPowerAPI', () => {
     const response = await api2.getCriticalPowerProfile(athleteId);
     expect(response.statusCode).toEqual(200);
     expect(response.body).toHaveProperty('efforts');
+  });
+
+  test('isAuthenticated returns true', async () => {
+    expect(await api.isAuthenticated()).toEqual(true);
+  });
+});
+
+describe('ZwiftPowerAPI when not authenticated', () => {
+  test('isAuthenticated returns false', async () => {
+    const api = new ZwiftPowerAPI(process.env.ZWIFT_USER as string, process.env.ZWIFT_PASS as string);
+    expect(await api.isAuthenticated()).toEqual(false);
   });
 });

@@ -2,6 +2,10 @@
 
 * (none)
 
+# v0.0.5
+
+* Add `isAuthenticated` to `ZwiftPowerAPI` and revise `ConnectionPool` to use it.
+
 # v0.0.4
 
 * Added `debug` option to `ConnectionPool` class.
