@@ -38,7 +38,9 @@ class ConnectionPool {
                 if (this._debug) {
                     console.log(`ConnectionPool: getZwiftAPIAndAuthenticate trying connection [${tryIdx}].`);
                 }
-                await connection.authenticate();
+                if (!connection.isAuthenticated()) {
+                    await connection.authenticate();
+                }
                 this._prevZwiftConnection = tryIdx;
                 if (this._debug) {
                     console.log(`ConnectionPool: getZwiftAPIAndAuthenticate returning connection [${tryIdx}].`);
@@ -67,7 +69,9 @@ class ConnectionPool {
                 if (this._debug) {
                     console.log(`ConnectionPool: getZwiftPowerAPIAndAuthenticate trying connection [${tryIdx}].`);
                 }
-                await connection.authenticate();
+                if (!connection.isAuthenticated()) {
+                    await connection.authenticate();
+                }
                 this._prevZwiftPowerConnection = tryIdx;
                 if (this._debug) {
                     console.log(`ConnectionPool: getZwiftPowerAPIAndAuthenticate returning connection [${tryIdx}].`);

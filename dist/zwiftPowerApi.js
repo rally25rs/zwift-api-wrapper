@@ -40,7 +40,7 @@ class ZwiftPowerAPI extends baseApi_1.default {
         }
     }
     async getAuthenticated(url, body = undefined, options = {}) {
-        if (!await this._haveAuthCookie()) {
+        if (!await this.isAuthenticated()) {
             await this.authenticate();
         }
         const response = await this.request(url, body, options);
@@ -69,7 +69,7 @@ class ZwiftPowerAPI extends baseApi_1.default {
     async authenticate(cookies) {
         if (cookies) {
             await this.setCookies(cookies);
-            if (await this._haveAuthCookie()) {
+            if (await this.isAuthenticated()) {
                 return cookies;
             }
         }
@@ -103,7 +103,7 @@ class ZwiftPowerAPI extends baseApi_1.default {
         }
         return JSON.stringify(await this._cookieJar.serialize());
     }
-    async _haveAuthCookie() {
+    async isAuthenticated() {
         const cookies = await this._cookieJar.getCookies('https://zwiftpower.com/', { allPaths: true, expire: true });
         return !!cookies.find(c => c.key === 'phpbb3_lswlk_sid');
     }

@@ -113,7 +113,9 @@ class ZwiftAPI extends baseApi_1.default {
         }
     }
     isAuthenticated() {
-        return !!(this._authToken?.access_token);
+        return this._authToken?.access_token !== undefined
+            && this._authToken?.expires_at !== undefined
+            && this._authToken?.expires_at > new Date().getTime();
     }
     async fetch(urn, options = {}, headers = {}, body = undefined) {
         headers = headers || {};

@@ -2,7 +2,7 @@
 
 * (none)
 
-# v0.0.5
+# v0.0.6
 
 * Add `isAuthenticated` to `ZwiftPowerAPI` and revise `ConnectionPool` to use it.
 
