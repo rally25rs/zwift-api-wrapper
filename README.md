@@ -163,8 +163,9 @@ git commit, push, and open a PR.
 ### Publish a new version
 
 * Update `CHANGELOG.md`
-* [yarn version](https://yarnpkg.com/cli/version)
+* Update `package.json` version
+* `yarn build`
 * `git commit -am "..."`
 * `git tag v0.0.0`
 * `git push`
-* `yarn publish`
+* `yarn npm publish --access public`
