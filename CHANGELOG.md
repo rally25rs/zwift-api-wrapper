@@ -2,6 +2,11 @@
 
 * (none)
 
+# v0.0.7
+
+* Clear ZwiftPower auth cookie on 401, so next request will try to reauthenticate.
+* Add response status code to log messages.
+
 # v0.0.6
 
 * Add `isAuthenticated` to `ZwiftPowerAPI` and revise `ConnectionPool` to use it.

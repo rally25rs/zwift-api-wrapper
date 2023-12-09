@@ -24,7 +24,7 @@ function _toJSON(response) {
         console.error(response.body);
         return {
             ...response,
-            error: `Error parsing JSON: ${response.body}}`,
+            error: `Error parsing JSON: [${response.statusCode}] ${response.body}}`,
             body: undefined,
         };
     }
@@ -45,6 +45,9 @@ class ZwiftPowerAPI extends baseApi_1.default {
         }
         const response = await this.request(url, body, options);
         const statusCode = response.resp.statusCode || 0;
+        if (statusCode === 401) {
+            await this._cookieJar.removeAllCookies();
+        }
         return {
             statusCode,
             error: (statusCode === 0 || statusCode >= 400) ? response.data : undefined,
