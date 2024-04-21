@@ -1,6 +1,6 @@
 {
   "name": "@codingwithspike/zwift-api-wrapper",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "scripts": {
     "build": "tsc",
     "test": "vitest",

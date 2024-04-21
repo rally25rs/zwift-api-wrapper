@@ -1,5 +1,9 @@
 # Unversioned Changes (next version)
 
+* (none)
+
+# v0.0.8
+
 * [Issue 1](https://github.com/rally25rs/zwift-api-wrapper/issues/1) : Improve ZwiftPower auth and session timeout. Retry request once if first attempt seems to fail due to an expired session cookie.
 
 # v0.0.7
