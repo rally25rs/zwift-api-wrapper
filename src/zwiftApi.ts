@@ -317,7 +317,7 @@ export class ZwiftAPI extends BaseApi {
     return await this.fetchJSON<ZwiftGameInfo>(`/api/game_info`, { apiVersion: "2.7" });
   }
 
-  async searchProfiles(searchText: string, options = {}) {
+  async searchProfiles(searchText: string, options = {}) { // missed the return type here
     return await this.fetchPaged("/api/search/profiles", {
       method: "POST",
       json: { query: searchText },
@@ -339,7 +339,7 @@ export class ZwiftAPI extends BaseApi {
     );
   }
 
-  async setFollowing(them: string | number, us: string | number) {
+  async setFollowing(them: string | number, us: string | number) { // missed return type here
     return await this.fetchJSON(`/api/profiles/${us}/following/${them}`, {
       method: "POST",
       json: {

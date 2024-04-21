@@ -53,6 +53,7 @@ export class ZwiftPowerAPI extends BaseApi {
     url: string,
     body: string | undefined = undefined,
     options = {},
+    isRetry: boolean = false
   ): Promise<ZwiftAPIWrapperResponse<string>> {
     if (!await this.isAuthenticated()) {
       await this.authenticate();
@@ -60,8 +61,19 @@ export class ZwiftPowerAPI extends BaseApi {
     const response = await this.request(url, body, options);
     const statusCode = response.resp.statusCode || 0;
 
-    if(statusCode === 401) {
+    if(statusCode === 401 || statusCode === 403) {
       await this._cookieJar.removeAllCookies();
+    }
+    if (!await this.isAuthenticated()) {
+      if (isRetry) {
+        return {
+          statusCode: 401,
+          error: 'Session expired and re-authentication failed.',
+          body: undefined,
+        };
+      } else {
+        return await this.getAuthenticated(url, body, options, true);
+      }
     }
 
     return {
@@ -137,9 +149,11 @@ export class ZwiftPowerAPI extends BaseApi {
     return JSON.stringify(await this._cookieJar.serialize());
   }
 
-  async isAuthenticated() {
+  async isAuthenticated(): Promise<boolean> {
     const cookies = await this._cookieJar.getCookies('https://zwiftpower.com/', {allPaths: true, expire: true});
-    return !!cookies.find(c => c.key === 'phpbb3_lswlk_sid');
+    const sid = cookies.find(c => c.key === 'phpbb3_lswlk_sid');
+    const u = cookies.find(c => c.key === 'phpbb3_lswlk_u');
+    return !!sid && !!u && u.value !== '' && u.value !== '1';
   }
 
   async getCriticalPowerProfile(
