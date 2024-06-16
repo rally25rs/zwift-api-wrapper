@@ -52,7 +52,7 @@ export class ZwiftPowerAPI extends BaseApi {
   async getAuthenticated(
     url: string,
     body: string | undefined = undefined,
-    options = {},
+    options: https.RequestOptions = {},
     isRetry: boolean = false
   ): Promise<ZwiftAPIWrapperResponse<string>> {
     if (!await this.isAuthenticated()) {
@@ -61,7 +61,16 @@ export class ZwiftPowerAPI extends BaseApi {
     const response = await this.request(url, body, options);
     const statusCode = response.resp.statusCode || 0;
 
-    if(statusCode === 401 || statusCode === 403) {
+    if( statusCode === 401
+      || statusCode === 403
+      || ((options.headers?.accept?.indexOf('json') || -1) !== -1 && statusCode === 200 && response.data?.includes('<html'))
+    ) {
+      console.log(url,
+        options.headers?.accept,
+        statusCode,
+        response.resp.headers['content-type'],
+        response.data
+      );
       await this._cookieJar.removeAllCookies();
     }
     if (!await this.isAuthenticated()) {
@@ -162,32 +171,32 @@ export class ZwiftPowerAPI extends BaseApi {
     type: string = 'watts',
   ): Promise<ZwiftAPIWrapperResponse<ZwiftPowerCriticalPowerProfile>> {
     const url = `https://zwiftpower.com/api3.php?do=critical_power_profile&zwift_id=${encodeURIComponent(athleteId)}&zwift_event_id=${eventId}&type=${type}`;
-    const result = await this.getAuthenticated(url);
+    const result = await this.getAuthenticated(url, undefined, { headers: { accept: 'application/json' } });
     return _toJSON<ZwiftPowerCriticalPowerProfile>(result);
   }
 
   async getEventResults(eventId: string): Promise<ZwiftAPIWrapperResponse<ZwiftPowerEventResults>> {
     const url = `https://zwiftpower.com/cache3/results/${eventId}_zwift.json`;
-    const result = await this.getAuthenticated(url);
+    const result = await this.getAuthenticated(url, undefined, { headers: { accept: 'application/json' } });
     return _toJSON<ZwiftPowerEventResults>(result);
   }
 
   async getEventViewResults(eventId: string): Promise<ZwiftAPIWrapperResponse<ZwiftPowerEventViewResults>> {
     const url = `https://zwiftpower.com/cache3/results/${eventId}_view.json`;
-    const result = await this.getAuthenticated(url);
+    const result = await this.getAuthenticated(url, undefined, { headers: { accept: 'application/json' } });
     return _toJSON<ZwiftPowerEventViewResults>(result);
   }
 
   // Recent activities for this athlete.
   async getActivityResults(athleteId: string | number): Promise<ZwiftAPIWrapperResponse<ZwiftPowerActivityResults>> {
     const url = `https://zwiftpower.com/cache3/profile/${athleteId}_all.json`;
-    const result = await this.getAuthenticated(url);
+    const result = await this.getAuthenticated(url, undefined, { headers: { accept: 'application/json' } });
     return _toJSON<ZwiftPowerActivityResults>(result);
   }
 
   async getActivityAnalysis(eventId: string | number, athleteId: string | number): Promise<ZwiftAPIWrapperResponse<ZwiftPowerActivityAnalysis>> {
     const url = `https://zwiftpower.com/api3.php?do=analysis&zwift_id=${athleteId}&zwift_event_id=${eventId}`;
-    const result = await this.getAuthenticated(url);
+    const result = await this.getAuthenticated(url, undefined, { headers: { accept: 'application/json' } });
     return _toJSON<ZwiftPowerActivityAnalysis>(result);
   }
 }
