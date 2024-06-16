@@ -39,14 +39,29 @@ class ZwiftPowerAPI extends baseApi_1.default {
             this._password = password;
         }
     }
-    async getAuthenticated(url, body = undefined, options = {}) {
+    async getAuthenticated(url, body = undefined, options = {}, isRetry = false) {
         if (!await this.isAuthenticated()) {
             await this.authenticate();
         }
         const response = await this.request(url, body, options);
         const statusCode = response.resp.statusCode || 0;
-        if (statusCode === 401) {
+        if (statusCode === 401
+            || statusCode === 403
+            || ((options.headers?.accept?.indexOf('json') || -1) !== -1 && statusCode === 200 && response.data?.includes('<html'))) {
+            console.log(url, options.headers?.accept, statusCode, response.resp.headers['content-type'], response.data);
             await this._cookieJar.removeAllCookies();
+        }
+        if (!await this.isAuthenticated()) {
+            if (isRetry) {
+                return {
+                    statusCode: 401,
+                    error: 'Session expired and re-authentication failed.',
+                    body: undefined,
+                };
+            }
+            else {
+                return await this.getAuthenticated(url, body, options, true);
+            }
         }
         return {
             statusCode,
@@ -108,32 +123,34 @@ class ZwiftPowerAPI extends baseApi_1.default {
     }
     async isAuthenticated() {
         const cookies = await this._cookieJar.getCookies('https://zwiftpower.com/', { allPaths: true, expire: true });
-        return !!cookies.find(c => c.key === 'phpbb3_lswlk_sid');
+        const sid = cookies.find(c => c.key === 'phpbb3_lswlk_sid');
+        const u = cookies.find(c => c.key === 'phpbb3_lswlk_u');
+        return !!sid && !!u && u.value !== '' && u.value !== '1';
     }
     async getCriticalPowerProfile(athleteId, eventId = '', type = 'watts') {
         const url = `https://zwiftpower.com/api3.php?do=critical_power_profile&zwift_id=${encodeURIComponent(athleteId)}&zwift_event_id=${eventId}&type=${type}`;
-        const result = await this.getAuthenticated(url);
+        const result = await this.getAuthenticated(url, undefined, { headers: { accept: 'application/json' } });
         return _toJSON(result);
     }
     async getEventResults(eventId) {
         const url = `https://zwiftpower.com/cache3/results/${eventId}_zwift.json`;
-        const result = await this.getAuthenticated(url);
+        const result = await this.getAuthenticated(url, undefined, { headers: { accept: 'application/json' } });
         return _toJSON(result);
     }
     async getEventViewResults(eventId) {
         const url = `https://zwiftpower.com/cache3/results/${eventId}_view.json`;
-        const result = await this.getAuthenticated(url);
+        const result = await this.getAuthenticated(url, undefined, { headers: { accept: 'application/json' } });
         return _toJSON(result);
     }
     // Recent activities for this athlete.
     async getActivityResults(athleteId) {
         const url = `https://zwiftpower.com/cache3/profile/${athleteId}_all.json`;
-        const result = await this.getAuthenticated(url);
+        const result = await this.getAuthenticated(url, undefined, { headers: { accept: 'application/json' } });
         return _toJSON(result);
     }
     async getActivityAnalysis(eventId, athleteId) {
         const url = `https://zwiftpower.com/api3.php?do=analysis&zwift_id=${athleteId}&zwift_event_id=${eventId}`;
-        const result = await this.getAuthenticated(url);
+        const result = await this.getAuthenticated(url, undefined, { headers: { accept: 'application/json' } });
         return _toJSON(result);
     }
 }

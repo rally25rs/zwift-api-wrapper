@@ -102,8 +102,11 @@ class ZwiftAPI extends baseApi_1.default {
             refresh_token: resp.refresh_token,
             expires_at: resp.expires_in * 1000 + Date.now(),
         };
-        (0, assert_1.default)(this._authToken, "Auth token not set");
-        this._schedRefresh(this._authToken.expires_at - 10000);
+        if (!this._authToken) {
+            this.authenticate();
+        }
+        // assert(this._authToken, "Auth token not set");
+        // this._schedRefresh(this._authToken.expires_at - 10000);
     }
     _schedRefresh(refreshAt) {
         if (this._options?.autoRefreshAuth) {
