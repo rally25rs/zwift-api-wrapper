@@ -1,6 +1,7 @@
 # Unversioned Changes (next version)
 
-* (none)
+* [Issue 1](https://github.com/rally25rs/zwift-api-wrapper/issues/1) : Improve ZwiftPower auth by checking response header. If content is `text/html` when `application/json` was expected, reauthenticate.
+* [Issue 1](https://github.com/rally25rs/zwift-api-wrapper/issues/1) : Improve Zwift auth. When Refresh Token is no longer valid, re-attempt standard authentication.
 
 # v0.0.8
 
